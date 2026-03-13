@@ -166,6 +166,11 @@ public class OrderService {
         return orderRepository.findByUserId(userId);
     }
 
+    // BAD: Missing validation - status can be null; magic strings "P","C","S","D","X" in repository
+    public List<Order> getOrdersByStatus(String status) {
+        return orderRepository.findByStat(status);
+    }
+
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }

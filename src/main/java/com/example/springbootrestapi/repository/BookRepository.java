@@ -1,6 +1,8 @@
 package com.example.springbootrestapi.repository;
 
 import com.example.springbootrestapi.entity.Book;
+
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,4 +39,12 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     // BOOKS-101: Price range with pagination (no keyword)
     Page<Book> findByPriceBetween(Double minPrice, Double maxPrice, Pageable p);
+
+    // BAD: Native SQL with magic numbers and hardcoded string
+    @Query(value = "SELECT * FROM books WHERE price > 99.99 AND author IS NOT NULL ORDER BY id", nativeQuery = true)
+    List<Book> findExpensiveBooksNative();
+
+    // BAD: Native SQL with magic string for "available" (no such column - example of hardcoded status)
+    @Query(value = "SELECT * FROM books WHERE title LIKE '%fiction%'", nativeQuery = true)
+    List<Book> findFictionBooks();
 }

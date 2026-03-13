@@ -18,6 +18,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query(value = "SELECT * FROM orders WHERE stat != 'X' AND user_id = ?1", nativeQuery = true)
     List<Order> findActiveOrdersByUserId(Long userId);
 
+    // BAD: more native SQL with hardcoded status strings 'P', 'C', 'S'
+    @Query(value = "SELECT * FROM orders WHERE stat IN ('P', 'C', 'S') ORDER BY id DESC", nativeQuery = true)
+    List<Order> findPendingConfirmedOrShipped();
+
+    @Query(value = "SELECT * FROM orders WHERE stat = 'D' AND user_id = ?1", nativeQuery = true)
+    List<Order> findDeliveredByUser(Long userId);
+
+    @Query(value = "SELECT * FROM orders WHERE stat != 'X'", nativeQuery = true)
+    List<Order> findAllNotCancelled();
+
     // BAD: no pagination - could return huge result set
     List<Order> findByBookId(Long bookId);
 }
