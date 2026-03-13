@@ -1,5 +1,6 @@
 package com.example.springbootrestapi.controller;
 
+import com.example.springbootrestapi.dto.OrderSummary;
 import com.example.springbootrestapi.entity.Order;
 import com.example.springbootrestapi.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,16 @@ public class OrderController {
             // BAD: swallowing all exceptions, generic catch, no logging
             return ResponseEntity.internalServerError().body("Something went wrong");
         }
+    }
+
+    @GetMapping("/{id}/summary")
+    public ResponseEntity<?> getOrderSummary(@PathVariable Long id) {
+        OrderSummary summaryOpt = orderService.getOrderSummary(id);
+        if (summaryOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        OrderSummary summary = summaryOpt.get();
+        return ResponseEntity.ok(summary);
     }
 
     @GetMapping("/user/{uid}")
