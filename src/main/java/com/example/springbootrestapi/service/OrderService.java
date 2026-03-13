@@ -3,6 +3,9 @@ package com.example.springbootrestapi.service;
 import com.example.springbootrestapi.entity.Order;
 import com.example.springbootrestapi.repository.BookRepository;
 import com.example.springbootrestapi.repository.OrderRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +20,9 @@ public class OrderService {
 
     @Autowired
     private BookRepository bookRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     // BAD: magic numbers throughout - 0.05, 0.10, 0.15, 100, 500, 1000, 5 etc.
     // BAD: extremely high cyclomatic complexity - discount calculation monster method
@@ -168,6 +174,14 @@ public class OrderService {
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
+    }
+
+    // UNSAFE: user input (stat) concatenated into native SQL - no parameter binding, SQL injection risk
+    @SuppressWarnings("unchecked")
+    public List<Order> getOrdersByStatUnsafe(String stat) {
+        String sql = "SELECT * FROM orders WHERE stat = '" + stat + "'";
+        Query query = entityManager.createNativeQuery(sql, Order.class);
+        return query.getResultList();
     }
 
     // BAD: unused method - dead code
