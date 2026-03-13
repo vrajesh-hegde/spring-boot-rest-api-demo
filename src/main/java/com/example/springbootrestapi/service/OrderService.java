@@ -1,5 +1,6 @@
 package com.example.springbootrestapi.service;
 
+import com.example.springbootrestapi.dto.OrderSummary;
 import com.example.springbootrestapi.entity.Order;
 import com.example.springbootrestapi.repository.BookRepository;
 import com.example.springbootrestapi.repository.OrderRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -160,6 +162,39 @@ public class OrderService {
             orderRepository.save(o);
         }
         return ok;
+    }
+
+    /**
+     * Returns a summary DTO for the given order, or empty if not found.
+     * Uses local variables for status code and human-readable label mapping.
+     */
+    public Optional<OrderSummary> getOrderSummary(Long orderId) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Order order = orderOpt.get();
+        String statusCode = order.getStat();
+        String statusLabel = resolveStatusLabel(statusCode);
+
+        long id = order.getId();
+        double totalPrice = order.getTp();
+
+        OrderSummary summary = new OrderSummary(id, totalPrice, statusCode, statusLabel);
+        return Optional.of(summary);
+    }
+
+    private String resolveStatusLabel(String code) {
+        if (code == null) return "Unknown";
+        return switch (code) {
+            case "P" -> "Pending";
+            case "C" -> "Confirmed";
+            case "S" -> "Shipped";
+            case "D" -> "Delivered";
+            case "X" -> "Cancelled";
+            default -> "Unknown";
+        };
     }
 
     public List<Order> getOrdersByUser(Long userId) {
