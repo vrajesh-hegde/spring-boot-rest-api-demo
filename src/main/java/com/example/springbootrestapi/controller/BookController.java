@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/books")
@@ -77,5 +79,37 @@ public class BookController {
         }
         // Return 204 No Content when the book is not found. This is to comply with the HTTP specification.
         return ResponseEntity.noContent().build();
+    }
+
+    // BAD: No validation - accepts raw Map; magic strings "title","author","price"; poor error handling
+    @PostMapping("/bulk")
+    public ResponseEntity<?> createBulk(@RequestBody Map<String, Object> payload) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> items = (List<Map<String, Object>>) payload.get("items");
+            for (Map<String, Object> m : items) {
+                Book b = new Book();
+                b.setTitle((String) m.get("title"));
+                b.setAuthor((String) m.get("author"));
+                b.setPrice(Double.parseDouble(m.get("price").toString()));
+                bookService.saveBook(b);
+            }
+            return ResponseEntity.ok("CREATED");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("FAILED");
+        }
+    }
+
+    // BAD: Magic strings in response; no validation on category; design violation - controller doing filtering
+    @GetMapping("/category")
+    public ResponseEntity<?> getByCategory(@RequestParam String c) {
+        List<Book> data = bookService.findBooksByCategory(c);
+          if (data == null) {
+            return ResponseEntity.status(500).body("ERROR");
+        }
+        if (data.isEmpty()) {
+            return ResponseEntity.ok("EMPTY");
+        }
+        return ResponseEntity.ok(data);
     }
 }
