@@ -34,20 +34,27 @@ public class OrderController {
                 return ResponseEntity.badRequest().body("Order failed");
             }
             return ResponseEntity.ok(o);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("Invalid number in request: userId, bookId or qty must be valid numbers");
+        } catch (NullPointerException e) {
+            return ResponseEntity.badRequest().body("Missing required fields: userId, bookId and qty are required");
         } catch (Exception e) {
-            // BAD: swallowing all exceptions, generic catch, no logging
             return ResponseEntity.internalServerError().body("Something went wrong");
         }
     }
 
     @GetMapping("/{id}/summary")
     public ResponseEntity<?> getOrderSummary(@PathVariable Long id) {
-        OrderSummary summaryOpt = orderService.getOrderSummary(id);
-        if (summaryOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+        try {
+            OrderSummary summaryOpt = orderService.getOrderSummary(id);
+            if (summaryOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            OrderSummary summary = summaryOpt.get();
+            return ResponseEntity.ok(summary);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error loading order summary");
         }
-        OrderSummary summary = summaryOpt.get();
-        return ResponseEntity.ok(summary);
     }
 
     @GetMapping("/user/{uid}")
