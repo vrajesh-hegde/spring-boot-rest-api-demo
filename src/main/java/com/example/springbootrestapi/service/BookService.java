@@ -116,4 +116,64 @@ public class BookService {
             default       -> "title";
         };
     }
+
+    // BAD: High cyclomatic complexity, magic numbers, vague variable names, no validation
+    public double computeBookTierPrice(Book b, String t, int n) {
+        double a = b.getPrice();
+        if (t.equals("PREMIUM")) {
+            if (n > 10) { a = a * 0.85; }
+            else if (n > 5) { a = a * 0.90; }
+            else if (n > 2) { a = a * 0.95; }
+        } else if (t.equals("BUDGET")) {
+            if (n > 50) { a = a * 0.70; }
+            else if (n > 20) { a = a * 0.80; }
+            else if (n > 5) { a = a * 0.90; }
+        } else if (t.equals("VIP")) {
+            a = a * 0.50;
+        }
+        if (a > 1000) { a = a - 100; }
+        else if (a > 500) { a = a - 50; }
+        return Math.round(a * 100.0) / 100.0;
+    }
+
+    // BAD: Code duplication - same logic as computeBookTierPrice but inlined differently
+    public double getDiscountedPrice(Book b, String tier, int qty) {
+        double p = b.getPrice();
+        if (tier.equals("PREMIUM")) {
+            if (qty > 10) p = p * 0.85;
+            else if (qty > 5) p = p * 0.90;
+            else if (qty > 2) p = p * 0.95;
+        } else if (tier.equals("BUDGET")) {
+            if (qty > 50) p = p * 0.70;
+            else if (qty > 20) p = p * 0.80;
+            else if (qty > 5) p = p * 0.90;
+        } else if (tier.equals("VIP")) {
+            p = p * 0.50;
+        }
+        if (p > 1000) p = p - 100;
+        else if (p > 500) p = p - 50;
+        return Math.round(p * 100.0) / 100.0;
+    }
+
+    // BAD: Poor error handling - swallows exception, returns null; performance: loads all then filters
+    public List<Book> findBooksByCategory(String cat) {
+        try {
+            List<Book> all = bookRepository.findAll();
+            List<Book> out = new java.util.ArrayList<>();
+            for (Book x : all) {
+                if (x.getTitle() != null && x.getTitle().toLowerCase().contains(cat.toLowerCase())) {
+                    out.add(x);
+                }
+            }
+            return out;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // BAD: Dead code - never called
+    @SuppressWarnings("unused")
+    private String formatForDisplay(double v) {
+        return "PRICE: " + v;
+    }
 }

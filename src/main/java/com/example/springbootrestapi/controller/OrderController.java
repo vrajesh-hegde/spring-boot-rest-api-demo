@@ -52,7 +52,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
-    // BAD: status update uses single-letter param with no docs
+    // BAD: status update uses single-letter param with no docs; magic strings "P","C","S","D","X"
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String s) {
         boolean ok = orderService.updateOrderStatus(id, s);
@@ -60,5 +60,17 @@ public class OrderController {
             return ResponseEntity.badRequest().body("Invalid transition or order not found");
         }
         return ResponseEntity.ok("Status updated to: " + s);
+    }
+
+    // BAD: No validation on id or status; inconsistent spacing; magic strings in response
+    @GetMapping("/by-status")
+    public ResponseEntity<?> getByStatus( @RequestParam String status ) {
+        if ( status.equals("P") || status.equals("C") || status.equals("S") ) {
+            return ResponseEntity.ok(orderService.getOrdersByStatus(status));
+        }
+        if ( status.equals("D") ) {
+            return ResponseEntity.ok(orderService.getOrdersByStatus("D"));
+        }
+        return ResponseEntity.badRequest().body("BAD_STATUS");
     }
 }
