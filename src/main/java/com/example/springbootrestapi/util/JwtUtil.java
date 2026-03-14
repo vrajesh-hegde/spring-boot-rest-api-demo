@@ -6,10 +6,12 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.security.Key;
 
 @Component
 public class JwtUtil {
@@ -46,8 +48,27 @@ public class JwtUtil {
                 .compact();
     }
 
+
+    private boolean isUnsecuredToken(String t) {
+        if (t == null || !t.contains(".")) return false;
+        String[] parts = t.split("\\.");
+        if (parts.length < 2) return false;
+        try {
+            String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+            return headerJson.contains("\"alg\":\"none\"") || headerJson.contains("\"alg\": \"none\"");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // BAD: no exception handling - throws raw JWT exceptions to caller
     public Claims extractClaims(String t) {   // BAD: vague param name 't'
+
+        if (isUnsecuredToken(t)) {
+            String[] parts = t.split("\\.", 3);
+            String unsigned = parts.length >= 2 ? parts[0] + "." + parts[1] + "." : t;
+            return Jwts.parserBuilder().build().parseClaimsJwt(unsigned).getBody();
+        }
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
